@@ -1,0 +1,406 @@
+# https://makerworld.com/en/models/3082048-smart-4-channel-dosing-pump#profileId-3471321
+# --- GLOBAL VARIABLES (Permanently saves counter values on the ESP) ---
+globals:
+  - id: pump_1_total_dosed
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+  - id: pump_2_total_dosed
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+  - id: pump_3_total_dosed
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+  - id: pump_4_total_dosed
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+
+# --- SENSORS (For Home Assistant long-term statistics / charts) ---
+sensor:
+  - platform: template
+    name: "Pump 1 - Total dosed"
+    id: sensor_pump_1_total
+    unit_of_measurement: "mL"
+    device_class: volume
+    state_class: total_increasing 
+    accuracy_decimals: 1
+    update_interval: 60s
+    lambda: 'return id(pump_1_total_dosed);'
+
+  - platform: template
+    name: "Pump 2 - Total dosed"
+    id: sensor_pump_2_total
+    unit_of_measurement: "mL"
+    device_class: volume
+    state_class: total_increasing 
+    accuracy_decimals: 1
+    update_interval: 60s
+    lambda: 'return id(pump_2_total_dosed);'
+
+  - platform: template
+    name: "Pump 3 - Total dosed"
+    id: sensor_pump_3_total
+    unit_of_measurement: "mL"
+    device_class: volume
+    state_class: total_increasing 
+    accuracy_decimals: 1
+    update_interval: 60s
+    lambda: 'return id(pump_3_total_dosed);'
+
+  - platform: template
+    name: "Pump 4 - Total dosed"
+    id: sensor_pump_4_total
+    unit_of_measurement: "mL"
+    device_class: volume
+    state_class: total_increasing 
+    accuracy_decimals: 1
+    update_interval: 60s
+    lambda: 'return id(pump_4_total_dosed);'
+
+# --- PHYSICAL BUTTONS (For manual priming/filling via button press) ---
+# REVERSED ORDER (Pin 15, 14, 13, 12)
+# Normally open momentary switch between gpio pin and ground. 
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 15
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "Pump 1 - Manual Button"
+    on_press:
+      - switch.turn_on: pump_1
+    on_release:
+      - switch.turn_off: pump_1
+
+  - platform: gpio
+    pin:
+      number: 14
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "Pump 2 - Manual Button"
+    on_press:
+      - switch.turn_on: pump_2
+    on_release:
+      - switch.turn_off: pump_2
+
+  - platform: gpio
+    pin:
+      number: 13
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "Pump 3 - Manual Button"
+    on_press:
+      - switch.turn_on: pump_3
+    on_release:
+      - switch.turn_off: pump_3
+
+  - platform: gpio
+    pin:
+      number: 12
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "Pump 4 - Manual Button"
+    on_press:
+      - switch.turn_on: pump_4
+    on_release:
+      - switch.turn_off: pump_4
+
+# --- RELAY / MOSFET CONTROL ---
+switch:
+  - platform: gpio
+    pin:
+      number: GPIO16
+      mode: OUTPUT
+    name: "Pump 1 (Relay)"
+    id: pump_1
+    icon: "mdi:water-pump"
+
+  - platform: gpio
+    pin:
+      number: GPIO17
+      mode: OUTPUT
+    name: "Pump 2 (Relay)"
+    id: pump_2
+    icon: "mdi:water-pump"
+
+  - platform: gpio
+    pin:
+      number: GPIO26
+      mode: OUTPUT
+    name: "Pump 3 (Relay)"
+    id: pump_3
+    icon: "mdi:water-pump"
+
+  - platform: gpio
+    pin:
+      number: GPIO27
+      mode: OUTPUT
+    name: "Pump 4 (Relay)"
+    id: pump_4
+    icon: "mdi:water-pump"
+
+  - platform: gpio
+    name: Onboard LED
+    id: switch_gpio_LED
+    pin: GPIO23
+    
+# --- INPUT FIELDS FOR THE HA DASHBOARD (Values & Calibration) ---
+number:
+  # --- Pump 1 ---
+  - platform: template
+    name: "Pump 1 - Flow rate in 60s (mL)"
+    id: pump_1_cal_volume
+    optimistic: true
+    restore_value: true 
+    min_value: 0.1
+    max_value: 150.0
+    step: 0.01  
+    unit_of_measurement: mL
+    mode: box
+  - platform: template
+    name: "Pump 1 - Dose amount (mL)"
+    id: pump_1_daily_dose
+    optimistic: true
+    restore_value: true
+    min_value: 0.0
+    max_value: 20.0
+    step: 0.1  
+    unit_of_measurement: mL
+    mode: box
+
+  # --- Pump 2 ---
+  - platform: template
+    name: "Pump 2 - Flow rate in 60s (mL)"
+    id: pump_2_cal_volume
+    optimistic: true
+    restore_value: true 
+    min_value: 0.1
+    max_value: 150.0
+    step: 0.01
+    unit_of_measurement: mL
+    mode: box
+  - platform: template
+    name: "Pump 2 - Dose amount (mL)"
+    id: pump_2_daily_dose
+    optimistic: true
+    restore_value: true
+    min_value: 0.0
+    max_value: 20.0
+    step: 0.1
+    unit_of_measurement: "mL"
+    mode: box
+
+  # --- Pump 3 ---
+  - platform: template
+    name: "Pump 3 - Flow rate in 60s (mL)"
+    id: pump_3_cal_volume
+    optimistic: true
+    restore_value: true 
+    min_value: 0.1
+    max_value: 150.0
+    step: 0.01
+    unit_of_measurement: "mL"
+    mode: box
+  - platform: template
+    name: "Pump 3 - Dose amount (mL)"
+    id: pump_3_daily_dose
+    optimistic: true
+    restore_value: true
+    min_value: 0.0
+    max_value: 20.0
+    step: 0.1
+    unit_of_measurement: "mL"
+    mode: box
+
+  # --- Pump 4 ---
+  - platform: template
+    name: "Pump 4 - Flow rate in 60s (mL)"
+    id: pump_4_cal_volume
+    optimistic: true
+    restore_value: true 
+    min_value: 0.1
+    max_value: 150.0
+    step: 0.01
+    unit_of_measurement: "mL"
+    mode: box
+  - platform: template
+    name: "Pump 4 - Dose amount (mL)"
+    id: pump_4_daily_dose
+    optimistic: true
+    restore_value: true
+    min_value: 0.0
+    max_value: 20.0
+    step: 0.1
+    unit_of_measurement: "mL"
+    mode: box
+
+# --- BUTTONS (Actions in Home Assistant) ---
+button:
+  # --- Pump 1 ---
+  - platform: template
+    name: "Pump 1 - Calibration (60s)"
+    id: btn_cal_pump_1
+    icon: "mdi:flask-outline"
+    on_press:
+      - switch.turn_on: pump_1
+      - delay: 60s
+      - switch.turn_off: pump_1
+  - platform: template
+    name: "Pump 1 - Dose now"
+    id: btn_dose_pump_1
+    icon: "mdi:sprout"
+    on_press:
+      - script.execute: script_dose_pump_1
+  - platform: template
+    name: "Pump 1 - Reset counter"
+    id: btn_reset_pump_1
+    icon: "mdi:refresh"
+    on_press:
+      - lambda: |-
+          id(pump_1_total_dosed) = 0.0;
+          id(sensor_pump_1_total).publish_state(0.0);
+
+  # --- Pump 2 ---
+  - platform: template
+    name: "Pump 2 - Calibration (60s)"
+    id: btn_cal_pump_2
+    icon: "mdi:flask-outline"
+    on_press:
+      - switch.turn_on: pump_2
+      - delay: 60s
+      - switch.turn_off: pump_2
+  - platform: template
+    name: "Pump 2 - Dose now"
+    id: btn_dose_pump_2
+    icon: "mdi:sprout"
+    on_press:
+      - script.execute: script_dose_pump_2
+  - platform: template
+    name: "Pump 2 - Reset counter"
+    id: btn_reset_pump_2
+    icon: "mdi:refresh"
+    on_press:
+      - lambda: |-
+          id(pump_2_total_dosed) = 0.0;
+          id(sensor_pump_2_total).publish_state(0.0);
+
+  # --- Pump 3 ---
+  - platform: template
+    name: "Pump 3 - Calibration (60s)"
+    id: btn_cal_pump_3
+    icon: "mdi:flask-outline"
+    on_press:
+      - switch.turn_on: pump_3
+      - delay: 60s
+      - switch.turn_off: pump_3
+  - platform: template
+    name: "Pump 3 - Dose now"
+    id: btn_dose_pump_3
+    icon: "mdi:sprout"
+    on_press:
+      - script.execute: script_dose_pump_3
+  - platform: template
+    name: "Pump 3 - Reset counter"
+    id: btn_reset_pump_3
+    icon: "mdi:refresh"
+    on_press:
+      - lambda: |-
+          id(pump_3_total_dosed) = 0.0;
+          id(sensor_pump_3_total).publish_state(0.0);
+
+  # --- Pump 4 ---
+  - platform: template
+    name: "Pump 4 - Calibration (60s)"
+    id: btn_cal_pump_4
+    icon: "mdi:flask-outline"
+    on_press:
+      - switch.turn_on: pump_4
+      - delay: 60s
+      - switch.turn_off: pump_4
+  - platform: template
+    name: "Pump 4 - Dose now"
+    id: btn_dose_pump_4
+    icon: "mdi:sprout"
+    on_press:
+      - script.execute: script_dose_pump_4
+  - platform: template
+    name: "Pump 4 - Reset counter"
+    id: btn_reset_pump_4
+    icon: "mdi:refresh"
+    on_press:
+      - lambda: |-
+          id(pump_4_total_dosed) = 0.0;
+          id(sensor_pump_4_total).publish_state(0.0);
+
+# --- SCRIPTS (The actual calculation logic for runtimes) ---
+script:
+  - id: script_dose_pump_1
+    mode: single 
+    then:
+      - if:
+          condition:
+            lambda: 'return id(pump_1_daily_dose).state > 0 && id(pump_1_cal_volume).state > 0;'
+          then:
+            - switch.turn_on: pump_1
+            - delay: !lambda |-
+                float dose = id(pump_1_daily_dose).state;
+                float cal_vol = id(pump_1_cal_volume).state;
+                return (dose / cal_vol) * 60000.0;
+            - switch.turn_off: pump_1
+            - lambda: 'id(pump_1_total_dosed) += id(pump_1_daily_dose).state;'
+
+  - id: script_dose_pump_2
+    mode: single 
+    then:
+      - if:
+          condition:
+            lambda: 'return id(pump_2_daily_dose).state > 0 && id(pump_2_cal_volume).state > 0;'
+          then:
+            - switch.turn_on: pump_2
+            - delay: !lambda |-
+                float dose = id(pump_2_daily_dose).state;
+                float cal_vol = id(pump_2_cal_volume).state;
+                return (dose / cal_vol) * 60000.0;
+            - switch.turn_off: pump_2
+            - lambda: 'id(pump_2_total_dosed) += id(pump_2_daily_dose).state;'
+
+  - id: script_dose_pump_3
+    mode: single 
+    then:
+      - if:
+          condition:
+            lambda: 'return id(pump_3_daily_dose).state > 0 && id(pump_3_cal_volume).state > 0;'
+          then:
+            - switch.turn_on: pump_3
+            - delay: !lambda |-
+                float dose = id(pump_3_daily_dose).state;
+                float cal_vol = id(pump_3_cal_volume).state;
+                return (dose / cal_vol) * 60000.0;
+            - switch.turn_off: pump_3
+            - lambda: 'id(pump_3_total_dosed) += id(pump_3_daily_dose).state;'
+
+  - id: script_dose_pump_4
+    mode: single 
+    then:
+      - if:
+          condition:
+            lambda: 'return id(pump_4_daily_dose).state > 0 && id(pump_4_cal_volume).state > 0;'
+          then:
+            - switch.turn_on: pump_4
+            - delay: !lambda |-
+                float dose = id(pump_4_daily_dose).state;
+                float cal_vol = id(pump_4_cal_volume).state;
+                return (dose / cal_vol) * 60000.0;
+            - switch.turn_off: pump_4
+            - lambda: 'id(pump_4_total_dosed) += id(pump_4_daily_dose).state;'
